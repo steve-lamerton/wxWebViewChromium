@@ -21,6 +21,17 @@ project and add the path to your Chromiumium Embedded Framework
 install to your include directory list and link to `libcef_dll_wrapper`
 and `libcef`.
 
+Before compiling, you need to install [CMake 3.0][4]. Since the [issue][5], cmake 
+supports wxWidgets 2.95 or greater in version 3.0.
+
+Run the following commands:
+
+```
+cd your_path_to_wxWebViewChromium
+cmake -DCEF_ROOT_DIR=your_path_to_CEF .
+```
+Then the project files will be generated, open it and build it.
+
 Using
 -----
 
@@ -40,4 +51,5 @@ It can then be used in a standard `wxWebView::New` call
 [1]: https://github.com/steve-lamerton/wxWebViewChromium/wiki
 [2]: http://www.wxwidgets.org
 [3]: http://code.google.com/p/chromiumembedded/
-
+[4]: http://www.cmake.org/files/dev/
+[5]: http://public.kitware.com/Bug/bug_relationship_graph.php?bug_id=14587&graph=relation
