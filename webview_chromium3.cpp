@@ -270,7 +270,9 @@ wxString wxWebViewChromium::GetCurrentTitle() const
 
 void wxWebViewChromium::Print()
 {
-    //m_browser->GetMainFrame()->Print();
+#if CHROME_VERSION_BUILD >= 1650
+    m_clientHandler->GetBrowser()->GetHost()->Print();
+#endif
 }
 
 void wxWebViewChromium::Cut()
