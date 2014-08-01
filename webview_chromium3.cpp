@@ -108,7 +108,11 @@ wxWebViewChromium::~wxWebViewChromium()
     CefRefPtr<CefBrowser> browser = m_clientHandler->GetBrowser();
     if(browser.get()) {
         // Let the browser window know we are about to destroy it.
+#if CHROME_VERSION_BUILD >= 2078
+		// TODO: find equivalent call in new API ?
+#else
         browser->GetHost()->ParentWindowWillClose();
+#endif
     }
 }
 
@@ -217,7 +221,11 @@ void wxWebViewChromium::GoForward()
 
 void wxWebViewChromium::LoadURL(const wxString& url)
 { 
-    m_clientHandler->GetBrowser()->GetMainFrame()->LoadURL(url.ToStdString());
+	// Handle LoadURL calls while the browser is still initializing
+	if (!m_clientHandler->GetBrowser())
+		m_clientHandler->SetPendingURL(url);
+	else
+		m_clientHandler->GetBrowser()->GetMainFrame()->LoadURL(url.ToStdString());
 }
 
 void wxWebViewChromium::ClearHistory()
@@ -410,7 +418,11 @@ bool wxWebViewChromium::StartUp(int &code, const wxString &path)
     // If there is no subprocess then we need to execute on this process
     if(path == "")
     {
+#if CHROME_VERSION_BUILD >= 2078
+        code = CefExecuteProcess(args, NULL, NULL);
+#else
         code = CefExecuteProcess(args, NULL);
+#endif
         if(code >= 0)
             return false;
     }
@@ -421,14 +433,22 @@ bool wxWebViewChromium::StartUp(int &code, const wxString &path)
     settings.multi_threaded_message_loop = true;
     CefString(&settings.browser_subprocess_path) = path.ToStdString();
 
+#if CHROME_VERSION_BUILD >= 2078
+    return CefInitialize(args, settings, NULL, NULL);
+#else
     return CefInitialize(args, settings, NULL);
+#endif
 }
 
 int wxWebViewChromium::StartUpSubprocess()
 {
     CefMainArgs args(wxGetInstance()); 
 
+#if CHROME_VERSION_BUILD >= 2078
+    return CefExecuteProcess(args, NULL, NULL);
+#else
     return CefExecuteProcess(args, NULL);
+#endif
 }
 
 void wxWebViewChromium::Shutdown()
@@ -551,6 +571,14 @@ void ClientHandler::OnLoadEnd(CefRefPtr<CefBrowser> browser,
                               CefRefPtr<CefFrame> frame,
                               int httpStatusCode)
 {
+	// HACK: navigate to pendingURL as soon as possible
+	if (!m_pendingURL.empty())
+	{
+		GetBrowser()->GetMainFrame()->LoadURL(m_pendingURL.ToStdString());
+		m_pendingURL.clear();
+		return;
+	}
+
     wxString url = frame->GetURL().ToString();
     wxString target = frame->GetName().ToString();
 
