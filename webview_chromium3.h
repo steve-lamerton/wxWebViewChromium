@@ -105,10 +105,13 @@ public:
 
     void SetWebView(wxWebViewChromium *webview) { m_webview = webview; }
 
+	void SetPendingURL(const wxString& url) { m_pendingURL = url; };
+
 private:
     CefRefPtr<CefBrowser> m_browser;
     wxWebViewChromium *m_webview;
     int m_browserId;
+	wxString m_pendingURL;
 
     IMPLEMENT_REFCOUNTING(ClientHandler);
 };
